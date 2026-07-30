@@ -286,6 +286,15 @@ function Shutter({ onClick, busy }) {
         aria-label="Capture and identify"
         className="group relative flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full transition active:scale-95 disabled:opacity-50"
       >
+        {/* A slow breathing halo behind the idle shutter — makes the button
+            read as "ready and alive" rather than static chrome. */}
+        {!busy && (
+          <span
+            className="absolute inset-0 rounded-full bg-emerald-300/70"
+            style={{ animation: 'var(--animate-ring)', animationDuration: '2.6s' }}
+            aria-hidden="true"
+          />
+        )}
         <span className="absolute inset-0 rounded-full border-[3px] border-white/85" />
         <span className="h-[3.4rem] w-[3.4rem] rounded-full bg-white transition group-active:scale-90" />
       </button>

@@ -79,11 +79,13 @@ function buildResponseSchema(categoryNames) {
       },
       itemName: {
         type: 'string',
-        description: 'The specific object, as a person would name it. E.g. "AAA alkaline battery", "PET plastic water bottle", "banana peel". Not a generic category.'
+        description:
+          'The general TYPE of object, in Title Case, as a common noun phrase — e.g. "Plastic Water Bottle", "AAA Alkaline Battery", "Banana Peel", "Smartphone", "Cardboard Box". Never a brand, manufacturer or model name, even if printed on the object. A specific type is fine ("AAA Alkaline Battery"); a brand is not ("Duracell Battery").'
       },
       itemDescription: {
         type: 'string',
-        description: 'One or two sentences describing what the object is and what it is made of.'
+        description:
+          'One or two sentences describing what the object is and what it is made of. Describe it generically — do not name the brand even if visible.'
       },
       category: {
         type: 'string',
@@ -96,7 +98,8 @@ function buildResponseSchema(categoryNames) {
       },
       disposalInstructions: {
         type: 'string',
-        description: 'Two or three short, concrete steps for disposing of THIS specific object. Not generic advice about the category.'
+        description:
+          'Two or three short, concrete sentences for disposing of this TYPE of object. Plain flowing prose only — do not number or bullet the steps yourself (no "1.", "2.", "Step 1:"); the app numbers them for display.'
       },
       environmentalNote: {
         type: 'string',
@@ -104,7 +107,7 @@ function buildResponseSchema(categoryNames) {
       },
       material: {
         type: 'string',
-        description: 'The primary material, e.g. "PET plastic", "alkaline / steel", "organic matter", "cardboard".'
+        description: 'The primary material, e.g. "PET plastic", "alkaline / steel", "organic matter", "cardboard". No brand names.'
       }
     },
     required: [
@@ -132,9 +135,9 @@ Identify the item in the image and assign it to exactly one of these waste categ
 ${lines.join('\n')}
 
 Rules:
-- Name the SPECIFIC object, not the category. "AAA alkaline battery", not "hazardous waste".
-- Read any visible text, branding or labels on the object and use them.
-- Write disposalInstructions for THIS object specifically. If it is a battery, say where batteries go; do not repeat generic category advice.
+- Name the TYPE of object, not the category and not the brand. "AAA Alkaline Battery", not "hazardous waste" and not "Duracell Battery". Use Title Case.
+- Never use a brand, manufacturer or model name anywhere in your answer, even if it is printed on the object or clearly visible. Describe what the object generically IS, not whose product it is.
+- Write disposalInstructions for this TYPE of object specifically. If it is a battery, say where batteries go; do not repeat generic category advice. Write it as plain sentences — do not add your own numbering or bullets.
 - If the image shows no clear object — only a hand, a bare surface, or a blurred scene — set isWasteItem to false and set category to "Unknown".
 - If the object genuinely does not fit any listed category, use "Unknown".
 - Be honest in confidence. Use a low value when the image is unclear.
@@ -281,10 +284,15 @@ function normalise(raw, categories) {
 
   return {
     isWasteItem: raw.isWasteItem !== false,
-    itemName: text(raw.itemName, 120),
+    // toTitleCase and stripSelfNumbering are deterministic backstops, not a
+    // substitute for the prompt rules above. An LLM instruction is a strong
+    // steer, not a guarantee — capitalisation and self-numbering are cheap to
+    // enforce in code, so the demo does not depend on the model complying
+    // every single time.
+    itemName: toTitleCase(text(raw.itemName, 120)),
     itemDescription: text(raw.itemDescription, 400),
     material: text(raw.material, 80),
-    disposalInstructions: text(raw.disposalInstructions, 600),
+    disposalInstructions: stripSelfNumbering(text(raw.disposalInstructions, 600)),
     environmentalNote: text(raw.environmentalNote, 400),
     confidence: Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0,
     categoryId: match?.id ?? null,
@@ -297,4 +305,42 @@ function text(value, max) {
   if (typeof value !== 'string') return '';
   const trimmed = value.trim();
   return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed;
+}
+
+// Lower-cased in the middle of a title unless they are the first/last word —
+// standard Title Case convention (e.g. "Bag of Chips", not "Bag Of Chips").
+const TITLE_CASE_MINOR_WORDS = new Set([
+  'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'vs', 'via'
+]);
+
+/**
+ * "banana peel" -> "Banana Peel". Preserves existing acronyms like "AAA" or
+ * "PET" instead of mangling them into "Aaa" / "Pet".
+ */
+function toTitleCase(value) {
+  if (!value) return value;
+  const words = value.split(/\s+/);
+  return words
+    .map((word, i) => {
+      if (/^[A-Z0-9]{2,}$/.test(word)) return word; // e.g. AAA, PET, USB
+      const lower = word.toLowerCase();
+      const isEdge = i === 0 || i === words.length - 1;
+      if (!isEdge && TITLE_CASE_MINOR_WORDS.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(' ');
+}
+
+/**
+ * Removes any "1. ", "2)" style numbering Gemini adds despite being told not
+ * to, so a self-numbered response can never collide with the app's own
+ * numbered steps (which produced a blank "1." row followed by unnumbered text
+ * — the bug this exists to prevent).
+ */
+function stripSelfNumbering(value) {
+  if (!value) return value;
+  return value
+    .replace(/(^|\s)\d{1,2}[.)]\s+/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }

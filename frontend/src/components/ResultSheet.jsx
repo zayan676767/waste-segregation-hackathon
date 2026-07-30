@@ -108,7 +108,11 @@ export default function ResultSheet({ result, photo, onDismiss, onScanAgain }) {
             <h3 className="eyebrow text-[10px] font-bold text-white/50">How to dispose of this</h3>
             <ol className="mt-3 space-y-2.5">
               {steps.map((step, i) => (
-                <li key={i} className="flex gap-3">
+                <li
+                  key={i}
+                  className="animate-fade-up flex gap-3"
+                  style={{ animationDelay: `${i * 90}ms` }}
+                >
                   <span
                     className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                     style={{ backgroundColor: color, color: readableTextOn(color) }}
@@ -194,14 +198,38 @@ function Emptyish({ icon, title, body, onScanAgain }) {
 
 /**
  * Gemini returns disposal advice as prose. Numbered steps read far better on a
- * phone, so it is split on sentence boundaries — falling back to the whole
- * string when it is a single instruction.
+ * phone, so this splits it into an array — falling back to the whole string
+ * when it is a single instruction.
+ *
+ * The backend already strips any numbering Gemini adds on its own, but this
+ * stays numbering-aware too rather than assuming that always happened (a
+ * different backend version, a cached response, anything). Splitting on plain
+ * sentence boundaries without checking for numbering first was the actual bug:
+ * "1. Back up the device. 2. Remove the SIM." has a period-space-capital right
+ * after "1", so a sentence-boundary split cuts "1." into its own row and
+ * leaves the real text on the next one — a blank numbered circle followed by
+ * an unnumbered line, exactly what showed up on screen.
  */
 function splitSteps(text) {
   if (!text) return [];
-  const parts = text
-    .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+
+  // Numbered-list shape first: "1. X 2) Y 3. Z" — split on the markers
+  // themselves so the numeral is never separated from its own sentence.
+  const numbered = trimmed
+    .split(/(?:^|\s)\d{1,2}[.)]\s+/)
     .map((s) => s.trim())
     .filter(Boolean);
-  return parts.length > 1 ? parts.slice(0, 5) : text.trim() ? [text.trim()] : [];
+  if (numbered.length > 1) return numbered.slice(0, 6);
+
+  // Otherwise split on sentence boundaries. Requiring a lowercase letter right
+  // before the punctuation means "1." can never be mistaken for a sentence end
+  // (a digit is never lowercase), so this no longer needs the numbered-list
+  // check above to be perfect — it is a second, independent safeguard.
+  const bySentence = trimmed
+    .split(/(?<=[a-z][.!?])\s+(?=[A-Z0-9])/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return bySentence.length > 1 ? bySentence.slice(0, 5) : [trimmed];
 }
