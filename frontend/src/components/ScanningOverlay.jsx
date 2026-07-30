@@ -10,9 +10,9 @@ import { useEffect, useState } from 'react';
  * progress events — a single HTTP call has no intermediate milestones to
  * report — but they are truthful about what the request is doing.
  *
- * The photo itself is shown crisp, never blurred. An earlier version applied a
- * 1px CSS blur plus heavy darken/desaturate, which read as a corrupted image
- * rather than an intentional effect — that combination sits in the worst zone:
+ * The photo itself is shown crisp, never blurred. A 1px CSS blur plus heavy
+ * darken/desaturate reads as a corrupted image rather than an intentional
+ * effect — that combination sits in the worst zone:
  * too subtle to look like deliberate soft-focus, strong enough to introduce
  * visible edge artifacts on a compressed JPEG. Legibility here comes from a
  * gradient scrim and a frosted glass panel instead of filtering the photo.
