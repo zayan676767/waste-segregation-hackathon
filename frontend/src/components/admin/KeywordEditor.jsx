@@ -10,7 +10,7 @@ const VISIBLE_LIMIT = 40;
 /**
  * Maps a word in the classifier's output to a category.
  *
- * This is the live fix for a wrong guess on stage: if the model calls something
+ * This is the live fix for a wrong guess: if the model calls something
  * "milk can" and it lands in the wrong bin, add or move the keyword here and the
  * next scan is correct — no code change, no restart.
  */

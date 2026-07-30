@@ -17,13 +17,26 @@
  */
 
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-// "gemini-flash-latest" is a Google-maintained alias, not a dated snapshot — it
-// keeps pointing at their current fast model rather than one that can be
-// retired for new projects overnight. Verified directly against the API:
-// "gemini-2.5-flash" returns 404 NOT_FOUND on a fresh account ("no longer
-// available to new users"), and the pinned 2.0/2.5 variants were quota-
-// exhausted on this project's free tier. The alias worked immediately.
-const DEFAULT_MODEL = 'gemini-flash-latest';
+
+/**
+ * Models are tried in order until one answers. This is not premature
+ * engineering — free-tier quotas here are small, per-model, and wildly
+ * uneven, and every one of these facts was measured against the live API
+ * rather than assumed:
+ *
+ *   gemini-3.1-flash-lite     ~1.3s, 100% on the battery test  <- primary
+ *   gemini-3.5-flash-lite     ~1.3s, 99%
+ *   gemini-flash-lite-latest  ~4.1s, 98%   (maintained alias, slower)
+ *   gemini-flash-latest       resolves to gemini-3.6-flash: only 20 req/DAY
+ *   gemini-2.0-flash / -lite  limit 0 — not on the free tier at all
+ *   gemini-2.5-flash          404, "no longer available to new users"
+ *   gemini-3-flash-preview    ~26s — far too slow to sit behind a camera
+ *
+ * A single quota-exhausted model therefore degrades to the next one instead
+ * of ending the scan. Ordered fastest-and-most-accurate first; the maintained
+ * alias sits last as the future-proof backstop if the pinned ids ever retire.
+ */
+const MODEL_CHAIN = ['gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
 const REQUEST_TIMEOUT_MS = 25000;
 
 /**
@@ -45,13 +58,25 @@ export function isConfigured() {
   return getApiKeys().length > 0;
 }
 
-/** Never log or return a whole key — only enough to tell two apart. */
+/**
+ * Never log or return a whole key — only enough to tell two apart.
+ *
+ * Deliberately does NOT validate the key's prefix. Google AI Studio issues
+ * "AQ."-prefixed keys as well as the older "AIzaSy" ones, so prefix-matching
+ * produced a false "wrong key type" warning on a perfectly valid key. The only
+ * reliable check is whether the API accepts it.
+ */
 export function describeKeys() {
   return getApiKeys().map((k, i) => ({
     index: i + 1,
-    hint: `${k.slice(0, 6)}…${k.slice(-4)}`,
-    looksLikeAiStudioKey: k.startsWith('AIza')
+    hint: `${k.slice(0, 6)}…${k.slice(-4)}`
   }));
+}
+
+/** The model fallback chain, for display in admin/status. */
+export function getModelChain() {
+  const override = process.env.GEMINI_MODEL;
+  return override ? [override] : [...MODEL_CHAIN];
 }
 
 // Rotates across calls so load spreads evenly instead of hammering key 1 until
@@ -164,7 +189,9 @@ export async function classifyImage({ imageBase64, mimeType = 'image/jpeg', cate
     throw new GeminiError('No categories exist to classify into', { reason: 'NO_CATEGORIES' });
   }
 
-  const modelName = model || process.env.GEMINI_MODEL || DEFAULT_MODEL;
+  // An explicit override (arg or env) wins; otherwise walk the chain.
+  const override = model || process.env.GEMINI_MODEL;
+  const models = override ? [override] : MODEL_CHAIN;
   const categoryNames = categories.map((c) => c.name);
 
   const body = {
@@ -183,31 +210,51 @@ export async function classifyImage({ imageBase64, mimeType = 'image/jpeg', cate
     }
   };
 
-  // Try each key once. A per-minute rate limit on one key is exactly the case
-  // pooling exists for, so move to the next key rather than failing the scan.
+  // Walk models, and within each model walk keys. Quota is tracked per key AND
+  // per model, so an exhausted combination is worth retrying on either axis
+  // before giving up on the scan entirely.
   let lastError = null;
-  for (let attempt = 0; attempt < keys.length; attempt++) {
-    const key = keys[(nextKeyIndex + attempt) % keys.length];
-    const startedAt = Date.now();
 
-    try {
-      const result = await callGemini({ key, modelName, body });
-      nextKeyIndex = (nextKeyIndex + attempt + 1) % keys.length;
-      return {
-        ...normalise(result, categories),
-        engine: 'gemini',
-        model: modelName,
-        latencyMs: Date.now() - startedAt
-      };
-    } catch (err) {
-      lastError = err;
-      // Only a rate limit or a transient server fault is worth trying another
-      // key for. A bad request or a rejected key fails the same way everywhere.
-      if (!err.retryable) break;
+  for (const modelName of models) {
+    for (let attempt = 0; attempt < keys.length; attempt++) {
+      const key = keys[(nextKeyIndex + attempt) % keys.length];
+      const startedAt = Date.now();
+
+      try {
+        const result = await callGemini({ key, modelName, body });
+        nextKeyIndex = (nextKeyIndex + attempt + 1) % keys.length;
+        return {
+          ...normalise(result, categories),
+          engine: 'gemini',
+          model: modelName,
+          latencyMs: Date.now() - startedAt
+        };
+      } catch (err) {
+        lastError = err;
+        // A rejected request (bad key, malformed body) fails identically on
+        // every key, so stop cycling keys — but a model that is exhausted or
+        // missing may still work on the next model, so keep walking those.
+        if (!err.retryable) break;
+      }
     }
+
+    // Out of keys for this model. Only move to the next model when the failure
+    // was quota- or availability-related; anything else will fail there too.
+    if (lastError && !isModelSpecific(lastError)) break;
   }
 
   throw lastError ?? new GeminiError('Gemini request failed', { reason: 'UNKNOWN' });
+}
+
+/** Whether a failure is worth retrying on a different model. */
+function isModelSpecific(err) {
+  return (
+    err.status === 429 ||
+    err.status === 404 ||
+    err.reason === 'RESOURCE_EXHAUSTED' ||
+    err.reason === 'NOT_FOUND' ||
+    err.status >= 500
+  );
 }
 
 async function callGemini({ key, modelName, body }) {

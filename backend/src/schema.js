@@ -8,6 +8,7 @@ import { db } from './db.js';
 export function seedDatabase() {
   seedCategories();
   seedSettings();
+  pruneObsoleteSettings();
   seedLabelMap();
 }
 
@@ -59,21 +60,13 @@ function seedCategories() {
 
 const DEFAULT_SETTINGS = [
   {
-    // 0.25, not 0.6. The score compared against this is a category total summed
-    // across the model's top labels, and measured values on real photos land
-    // around 0.5-0.9 for clear items and 0.15-0.3 for genuinely ambiguous ones.
-    // A 0.6 gate rejected an obvious plastic bottle, because MobileNet spread
-    // its certainty across "water bottle" and "pop bottle".
+    // The vision model reports its own confidence, and on a clear photo that is
+    // typically 0.95+. 0.5 leaves room to flag genuinely ambiguous shots without
+    // rejecting good ones.
     key: 'confidence_threshold',
-    value: '0.25',
+    value: '0.5',
     type: 'number',
     label: 'Minimum confidence (0-1) before a result is trusted'
-  },
-  {
-    key: 'inference_interval_ms',
-    value: '1500',
-    type: 'number',
-    label: 'Milliseconds between predictions in live camera mode'
   },
   {
     key: 'app_title',
@@ -100,6 +93,25 @@ function seedSettings() {
 
   db.transaction(() => {
     for (const setting of DEFAULT_SETTINGS) insert.run(setting);
+  })();
+}
+
+/**
+ * Settings that no longer control anything are deleted, not left lying around.
+ *
+ * Dropping a key from DEFAULT_SETTINGS stops it being created in a NEW database
+ * but does nothing to one that already has the row — it would keep showing up
+ * in the admin Settings tab as a knob that turns nothing. Every scan is now a
+ * single deliberate capture, so there is no interval to poll on.
+ */
+const RETIRED_SETTINGS = ['inference_interval_ms'];
+
+function pruneObsoleteSettings() {
+  const remove = db.prepare('DELETE FROM settings WHERE key = ?');
+  db.transaction(() => {
+    for (const key of RETIRED_SETTINGS) {
+      if (remove.run(key).changes > 0) console.log(`[db] removed retired setting ${key}`);
+    }
   })();
 }
 

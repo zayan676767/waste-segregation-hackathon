@@ -24,7 +24,7 @@
   --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-breathe: breathe 2.4s ease-in-out infinite;
 
-  /* v2 — camera and result-sheet motion */
+  /* Camera and result-sheet motion */
   --animate-scan-beam: scan-beam 2.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   --animate-sheet-up: sheet-up 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-ring: ring 1.8s ease-out infinite;
@@ -79,6 +79,20 @@
   }
   50% {
     transform: translateY(-5px);
+  }
+}
+
+/* The logo draws itself in once on load: a quarter turn and a small scale-up,
+   settling to rest. Deliberately finite — a permanently spinning recycle mark
+   would read as a loading spinner. */
+@keyframes brand-in {
+  from {
+    transform: rotate(-95deg) scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
   }
 }
 
@@ -188,6 +202,21 @@ body {
   background-size: 200% 100%;
   animation: var(--animate-shimmer);
   border-radius: 0.5rem;
+}
+
+/**
+ * Native dropdown options are rendered by the OS, not the page, so they ignore
+ * the dark styling on the <select> itself. On Windows they defaulted to white
+ * text on a white popup — invisible until hovered. These must be set on the
+ * option elements directly; styling the select is not enough.
+ */
+select option {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+select option:checked {
+  background-color: #1e293b;
 }
 
 /* ---- interaction polish ------------------------------------------------- */

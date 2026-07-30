@@ -93,8 +93,7 @@ export default function AdminPage() {
       {tab === 'log' && <ScanLog onFlash={onFlash} />}
 
       <p className="px-1 text-center text-[11px] leading-relaxed text-white/25">
-        No login by design — this panel is for the demo operator. Every change broadcasts to
-        connected phones and the dashboard immediately.
+        Every change broadcasts to connected devices immediately.
       </p>
     </div>
   );

@@ -1,12 +1,12 @@
+import { useEffect, useRef, useState } from 'react';
 import { readableTextOn, tint } from '../lib/color.js';
 
 /**
  * The result, presented as a sheet over the camera.
  *
- * This is where v2 earns the switch to Gemini: instead of "Rubber eraser →
- * Hazardous", it can say what the object actually is, what it is made of, and
- * how to dispose of THAT object. Every field here is per-item text the vision
- * model wrote for this photo, not category boilerplate.
+ * Every field here is per-item text the vision model wrote for this specific
+ * photo — what the object is, what it is made of, and how to dispose of it —
+ * rather than boilerplate attached to its category.
  */
 export default function ResultSheet({ result, photo, onDismiss, onScanAgain }) {
   if (!result) return null;
@@ -157,22 +157,84 @@ export default function ResultSheet({ result, photo, onDismiss, onScanAgain }) {
   );
 }
 
+/**
+ * Bottom sheet with drag-to-dismiss.
+ *
+ * The scrim is a solid dark wash with a decisive blur, not the 2px it used to
+ * be: a barely-there blur reads as a rendering fault rather than a deliberate
+ * effect. Either commit to the depth or leave the background sharp.
+ *
+ * Dragging is the gesture people expect from a sheet like this, so it is
+ * supported alongside the button and the scrim tap — three ways out, none of
+ * them the only way.
+ */
 function Shell({ children, onDismiss }) {
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const startY = useRef(0);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onDismiss?.();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onDismiss]);
+
+  const onPointerDown = (e) => {
+    // Only start a drag from the top of the scroll area, so dragging down to
+    // read the content does not fight the dismiss gesture.
+    if ((scrollRef.current?.scrollTop ?? 0) > 0) return;
+    startY.current = e.clientY;
+    setDragging(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging) return;
+    // Downward only — an upward drag should scroll, not stretch the sheet.
+    setDragY(Math.max(0, e.clientY - startY.current));
+  };
+
+  const endDrag = () => {
+    if (!dragging) return;
+    setDragging(false);
+    // Past roughly a fifth of the viewport, treat it as intent to dismiss.
+    if (dragY > window.innerHeight * 0.18) onDismiss?.();
+    else setDragY(0);
+  };
+
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center">
       <button
         aria-label="Dismiss result"
         onClick={onDismiss}
-        className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity"
+        style={{ opacity: Math.max(0.35, 1 - dragY / 400) }}
       />
       <div
-        className="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-[1.75rem] border-t border-white/12 bg-slate-950/95 px-5 pb-safe pt-3 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl"
-        style={{ animation: 'var(--animate-sheet-up)' }}
+        className="relative flex max-h-[88vh] w-full max-w-lg flex-col rounded-t-[1.75rem] border-t border-white/12 bg-slate-950/95 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)]"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: dragging ? 'none' : 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)',
+          animation: dragY === 0 && !dragging ? 'var(--animate-sheet-up)' : undefined
+        }}
         role="dialog"
         aria-modal="true"
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" aria-hidden="true" />
-        {children}
+        {/* Grab handle — the drag affordance, with a real touch target. */}
+        <div
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="flex shrink-0 cursor-grab touch-none justify-center pb-2 pt-3 active:cursor-grabbing"
+        >
+          <div className="h-1.5 w-11 rounded-full bg-white/25" aria-hidden="true" />
+        </div>
+
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-5 pb-safe">
+          {children}
+        </div>
       </div>
     </div>
   );

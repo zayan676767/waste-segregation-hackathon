@@ -9,7 +9,7 @@ import { Server as SocketServer } from 'socket.io';
 
 import { db, DB_PATH } from './db.js';
 import { classifyRouter } from './routes/classify.js';
-import { describeKeys, isConfigured } from './gemini.js';
+import { describeKeys, getModelChain, isConfigured } from './gemini.js';
 import { seedDatabase } from './schema.js';
 import { getStats } from './stats.js';
 import { ValidationError } from './helpers.js';
@@ -99,18 +99,8 @@ httpServer.listen(PORT, '0.0.0.0', () => {
 
   const keys = describeKeys();
   if (isConfigured()) {
-    console.log(
-      `[gemini] ${keys.length} key(s): ${keys.map((k) => k.hint).join(', ')} ` +
-        `(~${keys.length * 1500} scans/day)`
-    );
-    const wrongFormat = keys.filter((k) => !k.looksLikeAiStudioKey);
-    if (wrongFormat.length) {
-      console.warn(
-        `[gemini] WARNING: ${wrongFormat.length} key(s) do not start with "AIza". ` +
-          'Google AI Studio keys look like AIzaSy... — a key from the Cloud Console ' +
-          'will be rejected with ACCESS_TOKEN_TYPE_UNSUPPORTED.'
-      );
-    }
+    console.log(`[gemini] ${keys.length} key(s): ${keys.map((k) => k.hint).join(', ')}`);
+    console.log(`[gemini] model chain: ${getModelChain().join(' -> ')}`);
   } else {
     console.warn('[gemini] NO API KEY — add GEMINI_API_KEY to backend/.env');
   }

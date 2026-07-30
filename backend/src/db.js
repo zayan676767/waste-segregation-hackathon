@@ -60,7 +60,7 @@ db.exec(`
 
   -- The label column holds the item name and stays the display field everywhere.
   -- The remaining columns carry what Gemini returns per item, which is the whole
-  -- reason for v2: a real name, what the thing is made of, and disposal steps
+  -- point of the vision model: a real name, what the thing is made of, and steps
   -- written for THAT object rather than boilerplate for its bin.
   CREATE TABLE IF NOT EXISTS scans (
     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +84,7 @@ db.exec(`
 /**
  * Adds any column the running code expects but an older database file lacks.
  *
- * A v1 database copied across, or one created before these columns existed,
+ * An older database file, or one created before these columns existed,
  * would otherwise throw "no such column" on the first scan. SQLite has no
  * "ADD COLUMN IF NOT EXISTS", so the current columns are read first.
  */

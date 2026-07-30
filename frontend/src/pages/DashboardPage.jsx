@@ -6,12 +6,13 @@ import { setting, useAppData } from '../lib/useAppData.js';
 import { tint } from '../lib/color.js';
 import CategoryBarChart from '../components/dashboard/CategoryBarChart.jsx';
 import ScanFeed from '../components/dashboard/ScanFeed.jsx';
+import BrandMark from '../components/BrandMark.jsx';
 
 // Enough history to look busy on screen without growing unbounded over a long
 // judging session.
 const FEED_LIMIT = 40;
 
-export default function DashboardPage() {
+export default function DashboardPage({ device }) {
   const { settings } = useAppData();
   const [stats, setStats] = useState(null);
   const [feed, setFeed] = useState([]);
@@ -86,10 +87,8 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col gap-5 p-5 lg:h-screen lg:gap-6 lg:p-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl lg:text-4xl" aria-hidden="true">
-            ♻️
-          </span>
+        <div className="flex items-center gap-3.5">
+          <BrandMark size="lg" />
           <div>
             <h1 className="text-xl font-bold leading-tight tracking-tight text-white lg:text-3xl">
               {title}
@@ -102,11 +101,13 @@ export default function DashboardPage() {
 
         <div className="flex items-center gap-3">
           <ConnectionBadge connected={connected} />
+          {/* Links to the other screen this device is allowed to open: a phone
+              goes back to scanning, a laptop goes to the operator console. */}
           <Link
-            to="/"
+            to={device?.isPhone ? '/' : '/admin'}
             className="flex min-h-11 items-center rounded-xl border border-white/10 bg-white/5 px-4 text-xs font-semibold text-white/60 transition hover:bg-white/10 hover:text-white"
           >
-            Scan
+            {device?.isPhone ? 'Scan' : 'Admin'}
           </Link>
         </div>
       </header>
@@ -131,21 +132,27 @@ export default function DashboardPage() {
               <div className="skeleton mt-2 h-14 w-40 lg:h-24 lg:w-56" />
             ) : (
               <p className="mt-1 text-6xl font-black leading-none tabular-nums text-white lg:text-8xl">
-                {total.toLocaleString()}
+                <CountUp value={total} />
               </p>
             )}
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-white/45 lg:text-sm">
-              <span>
-                Avg confidence{' '}
-                <strong className="font-bold text-white/80 tabular-nums">
-                  {Math.round((stats?.averageConfidence ?? 0) * 100)}%
-                </strong>
-              </span>
-              {leader && leader.count > 0 && (
-                <span>
-                  Most common{' '}
-                  <strong className="font-bold text-white/80">{leader.name}</strong>
-                </span>
+              {total > 0 ? (
+                <>
+                  <span>
+                    Avg confidence{' '}
+                    <strong className="font-bold text-white/80 tabular-nums">
+                      {Math.round((stats?.averageConfidence ?? 0) * 100)}%
+                    </strong>
+                  </span>
+                  {leader && leader.count > 0 && (
+                    <span>
+                      Most common{' '}
+                      <strong className="font-bold text-white/80">{leader.name}</strong>
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span>Ready — scans appear here the moment a device submits one.</span>
               )}
             </div>
           </section>
@@ -154,7 +161,7 @@ export default function DashboardPage() {
             <h2 className="text-xs font-semibold eyebrow text-white/40 lg:text-sm">
               Category breakdown
             </h2>
-            <div className="mt-4 min-h-[190px] flex-1">
+            <div className="mt-4 flex min-h-[190px] flex-1 flex-col">
               {loading ? (
                 <div className="flex h-full flex-col justify-center gap-4">
                   {[0.9, 0.65, 0.4].map((w, i) => (
@@ -164,6 +171,11 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
+              ) : total === 0 ? (
+                /* A bar chart of zeroes is a wall of empty space. Until the
+                   first scan lands, show the categories themselves as cards so
+                   the panel communicates what the system sorts into. */
+                <CategoryPreview categories={categories} />
               ) : (
                 <CategoryBarChart data={categories} total={total} />
               )}
@@ -200,6 +212,90 @@ export default function DashboardPage() {
   );
 }
 
+/**
+ * Animates the headline total between values instead of snapping.
+ *
+ * On a projected screen the number is what people watch, and a hard jump from
+ * 7 to 8 is easy to miss entirely. A short roll draws the eye to the change.
+ *
+ * Driven by requestAnimationFrame off a timestamp, not a fixed-step interval,
+ * so it takes the same 550ms regardless of frame rate, and the final frame is
+ * always assigned the exact target — never a rounded approximation of it.
+ */
+function CountUp({ value, duration = 550 }) {
+  const [shown, setShown] = useState(value);
+  // Tracks what is on screen right now. A second scan arriving mid-roll must
+  // continue from the number the viewer can currently see, not restart from
+  // where the interrupted animation happened to begin.
+  const shownRef = useRef(value);
+  const frameRef = useRef(0);
+
+  useEffect(() => {
+    const from = shownRef.current;
+    if (from === value) return;
+
+    const commit = (n) => {
+      shownRef.current = n;
+      setShown(n);
+    };
+
+    // Big jumps (loading a database that already holds a day of scans) would
+    // be a slot machine, so they land immediately; only demo-sized steps roll.
+    if (Math.abs(value - from) > 25) {
+      commit(value);
+      return;
+    }
+
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      commit(t === 1 ? value : Math.round(from + (value - from) * eased));
+      if (t < 1) frameRef.current = requestAnimationFrame(tick);
+    };
+    frameRef.current = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [value, duration]);
+
+  return shown.toLocaleString();
+}
+
+/**
+ * Zero-state for the breakdown panel: the categories this system sorts into,
+ * shown as cards awaiting their first scan. Fills what would otherwise be a
+ * large blank region on a projected screen before the demo starts.
+ */
+function CategoryPreview({ categories }) {
+  if (!categories?.length) return null;
+  return (
+    <div className="flex h-full flex-col justify-center gap-3">
+      {categories.map((c, i) => (
+        <div
+          key={c.categoryId ?? c.name}
+          className="animate-fade-up flex items-center gap-3.5 rounded-2xl border p-3.5 lg:p-4"
+          style={{
+            animationDelay: `${i * 80}ms`,
+            borderColor: tint(c.color, 0.25),
+            backgroundColor: tint(c.color, 0.07)
+          }}
+        >
+          <span
+            className="h-9 w-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: c.color }}
+            aria-hidden="true"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-bold text-white lg:text-lg">{c.name}</p>
+            <p className="text-xs text-white/40">Awaiting first scan</p>
+          </div>
+          <span className="text-2xl font-black tabular-nums text-white/15 lg:text-3xl">0</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ConnectionBadge({ connected }) {
   return (
     <div
@@ -223,20 +319,32 @@ function ConnectionBadge({ connected }) {
   );
 }
 
+/**
+ * Where the scans came from.
+ *
+ * Tiles with a count of zero are dropped rather than shown as an empty column.
+ * That matters for `live`: the app no longer has a continuous mode, so the tile
+ * would sit at 0 forever and invite the question "what is Live and why is it
+ * broken?" — while still appearing correctly if an older database happens to
+ * hold scans recorded that way.
+ */
 function SourceSplit({ bySource }) {
   if (!bySource) return null;
   const entries = [
-    ['Live', bySource.live ?? 0],
-    ['Snap', bySource.snap ?? 0],
-    ['Sample', bySource.sample ?? 0]
-  ];
-  const total = entries.reduce((a, [, n]) => a + n, 0);
-  if (total === 0) return null;
+    ['Camera', bySource.snap ?? 0],
+    ['Sample', bySource.sample ?? 0],
+    ['Live', bySource.live ?? 0]
+  ].filter(([, count]) => count > 0);
+
+  if (entries.length === 0) return null;
 
   return (
     <div className="mt-4 flex gap-2 border-t border-white/8 pt-4">
       {entries.map(([label, count]) => (
-        <div key={label} className="flex-1 rounded-xl bg-white/4 px-3 py-2 text-center">
+        <div
+          key={label}
+          className="flex-1 rounded-xl border border-white/6 bg-white/4 px-3 py-2 text-center transition-colors hover:bg-white/6"
+        >
           <p className="text-lg font-bold tabular-nums text-white/90">{count}</p>
           <p className="text-[10px] eyebrow text-white/35">{label}</p>
         </div>

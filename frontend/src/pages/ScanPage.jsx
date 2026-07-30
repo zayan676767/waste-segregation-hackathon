@@ -10,7 +10,7 @@ import SampleGrid from '../components/SampleGrid.jsx';
 const RECENT_LIMIT = 8;
 
 /**
- * v2 scan screen.
+ * Scan screen.
  *
  * Continuous live inference is gone by design: every scan is now one deliberate
  * Gemini request. That removes the rate-limit problem entirely (15 req/min per
@@ -123,15 +123,6 @@ export default function ScanPage() {
         />
       )}
 
-      {vision?.configured && vision.keys?.some((k) => !k.looksLikeAiStudioKey) && (
-        <Notice
-          tone="warn"
-          title="API key may be the wrong type"
-          message="A key that does not start with AIza is a Google Cloud key, which the Gemini API rejects."
-          hint="Create one at aistudio.google.com/apikey instead."
-        />
-      )}
-
       {error && (
         <Notice
           tone="error"
@@ -224,7 +215,19 @@ export default function ScanPage() {
           {cam.isReady && <Shutter onClick={handleShutter} busy={busy} />}
         </div>
       ) : (
-        <SampleGrid onPick={handleSample} busy={busy} activeSrc={activeSample} />
+        <div className="space-y-4">
+          {/* While a sample is being identified, show the same captured-frame
+              overlay the camera path uses. Previously this only existed inside
+              the camera branch, so tapping a sample gave no feedback at all
+              during the several seconds the request takes. */}
+          {busy && photo ? (
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-black sm:aspect-[4/3]">
+              <ScanningOverlay photo={photo} accentColors={accentColors} />
+            </div>
+          ) : (
+            <SampleGrid onPick={handleSample} busy={busy} activeSrc={activeSample} />
+          )}
+        </div>
       )}
 
       <RecentStrip items={recent} />

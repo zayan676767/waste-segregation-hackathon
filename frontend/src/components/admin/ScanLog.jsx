@@ -127,7 +127,7 @@ export default function ScanLog({ onFlash }) {
             <ConfirmButton
               label="Clear scan log"
               confirmLabel="Yes, clear everything"
-              warning={`This permanently deletes all ${state.total} scan(s) and resets the dashboard totals to zero. Useful right before judging — but it cannot be undone.`}
+              warning={`This permanently deletes all ${state.total} scan(s) and resets the dashboard totals to zero. This cannot be undone.`}
               onConfirm={clearAll}
             />
           </div>

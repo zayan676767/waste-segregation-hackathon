@@ -1,7 +1,7 @@
 /**
- * Capture + classify pipeline for v2.
+ * Capture + classify pipeline.
  *
- * Gemini is the primary engine; the on-device MobileNet from v1 is kept only as
+ * Gemini is the primary engine; an on-device MobileNet model is kept only as
  * an offline safety net. It is never loaded up front — pulling 14 MB of weights
  * on a hotspot to sit unused would be wasteful — so it is imported lazily the
  * first time Gemini is genuinely unavailable.
@@ -78,7 +78,7 @@ export async function classifyFrame({ base64, mimeType = 'image/jpeg', source })
 }
 
 // ---------------------------------------------------------------------------
-// Offline fallback — the v1 engine, loaded on demand only.
+// Offline fallback — the on-device engine, loaded on demand only.
 // ---------------------------------------------------------------------------
 
 let offlineModulesPromise = null;

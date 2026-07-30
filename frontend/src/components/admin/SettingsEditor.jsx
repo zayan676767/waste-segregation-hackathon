@@ -12,7 +12,6 @@ import { Button, Field, SectionCard, TextInput } from './ui.jsx';
 export default function SettingsEditor({ settings, onFlash }) {
   const toDraft = (s) => ({
     thresholdPct: Math.round((s.confidence_threshold ?? 0.6) * 100),
-    inference_interval_ms: s.inference_interval_ms ?? 1500,
     app_title: s.app_title ?? '',
     unsure_message: s.unsure_message ?? ''
   });
@@ -53,9 +52,6 @@ export default function SettingsEditor({ settings, onFlash }) {
 
     if (draft.thresholdPct !== base.thresholdPct) {
       payload.confidence_threshold = draft.thresholdPct / 100;
-    }
-    if (Number(draft.inference_interval_ms) !== Number(base.inference_interval_ms)) {
-      payload.inference_interval_ms = Number(draft.inference_interval_ms);
     }
     if (draft.app_title !== base.app_title) payload.app_title = draft.app_title;
     if (draft.unsure_message !== base.unsure_message) {
@@ -122,22 +118,6 @@ export default function SettingsEditor({ settings, onFlash }) {
             <span>95% · strict</span>
           </div>
         </div>
-      </Field>
-
-      <Field
-        label="Live inference interval (ms)"
-        error={errors.inference_interval_ms}
-        hint="How often live mode classifies a frame. Higher is gentler on phone batteries. 250–10000."
-      >
-        <TextInput
-          type="number"
-          min={250}
-          max={10000}
-          step={50}
-          value={draft.inference_interval_ms}
-          onChange={(e) => set('inference_interval_ms', e.target.value)}
-          error={errors.inference_interval_ms}
-        />
       </Field>
 
       <Field label="App title" error={errors.app_title}>

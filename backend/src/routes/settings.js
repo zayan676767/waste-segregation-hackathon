@@ -36,11 +36,7 @@ settingsRouter.get('/', (req, res) => {
 const CONSTRAINTS = {
   confidence_threshold: {
     check: (v) => v >= 0 && v <= 1,
-    message: 'Must be between 0 and 1 (0.6 means 60%)'
-  },
-  inference_interval_ms: {
-    check: (v) => v >= 250 && v <= 10000,
-    message: 'Must be between 250 and 10000 milliseconds'
+    message: 'Must be between 0 and 1 (0.5 means 50%)'
   }
 };
 

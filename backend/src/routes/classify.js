@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db.js';
 import { toCategory, toScan, VALID_SOURCES, ValidationError } from '../helpers.js';
-import { classifyImage, describeKeys, GeminiError, isConfigured } from '../gemini.js';
+import { classifyImage, describeKeys, GeminiError, getModelChain, isConfigured } from '../gemini.js';
 import { getStats } from '../stats.js';
 
 export const classifyRouter = Router();
@@ -28,10 +28,7 @@ classifyRouter.get('/status', (req, res) => {
     configured: isConfigured(),
     keyCount: keys.length,
     keys,
-    // Two keys double the free daily quota; surfacing it makes the pooling
-    // visible in admin instead of being a silent backend detail.
-    dailyQuotaEstimate: keys.length * 1500,
-    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+    modelChain: getModelChain()
   });
 });
 
