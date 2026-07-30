@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover lets the layout extend under the notch and home bar;
+         the pt-safe / pb-safe utilities then pad content back into the safe area.
+         user-scalable=no is deliberate: during a demo an accidental double-tap
+         zoom on the camera view is worse than the loss of pinch zoom. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0d1117" />
+    <meta name="color-scheme" content="dark" />
+    <!-- Makes it behave like an app if added to a phone's home screen. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Waste Sort" />
+    <meta
+      name="description"
+      content="Classify waste as biodegradable, recyclable or hazardous in the browser, with disposal guidance and a live dashboard."
+    />
+    <title>Smart Waste Segregation Assistant</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

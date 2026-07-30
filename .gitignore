@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# build output
+dist/
+build/
+
+# logs
+*.log
+npm-debug.log*
+logs/
+
+# editor / OS junk
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# vite cache
+.vite/
+frontend/node_modules/.vite/

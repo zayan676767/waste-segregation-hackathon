@@ -1,0 +1,251 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------------- *
+ * Design tokens
+ *
+ * One place for the whole app's look, so every phase inherits the same system
+ * instead of each screen inventing its own spacing and colour.
+ * Category colours are NOT here — those come from the database at runtime and
+ * are applied inline, so changing a colour in admin restyles the UI live.
+ * ------------------------------------------------------------------------- */
+@theme {
+  --color-surface-0: oklch(0.16 0.02 265);
+  --color-surface-1: oklch(0.21 0.025 265);
+  --color-surface-2: oklch(0.26 0.03 265);
+
+  --color-accent: oklch(0.72 0.17 155);
+  --color-accent-soft: oklch(0.72 0.17 155 / 0.14);
+
+  --font-display: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', sans-serif;
+
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop-in: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-breathe: breathe 2.4s ease-in-out infinite;
+
+  /* v2 — camera and result-sheet motion */
+  --animate-scan-beam: scan-beam 2.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  --animate-sheet-up: sheet-up 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-ring: ring 1.8s ease-out infinite;
+  --animate-drift: drift 3.5s ease-in-out infinite;
+}
+
+/* A beam sweeping the frozen frame while the vision model thinks. Gemini takes
+   2-5 seconds; this makes the wait read as the app working rather than stalling. */
+@keyframes scan-beam {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(14%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+}
+
+/* ------------------------------------------------------------------------- */
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-display);
+  color: oklch(0.97 0.01 265);
+  background-color: var(--color-surface-0);
+  /* Two soft glows keep the flat dark background from looking dead. */
+  background-image:
+    radial-gradient(ellipse 80% 55% at 15% -5%, oklch(0.72 0.17 155 / 0.16), transparent),
+    radial-gradient(ellipse 70% 50% at 95% 0%, oklch(0.62 0.19 255 / 0.14), transparent);
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+/**
+ * Small caps label above a value ("DETECTED ITEM", "TOTAL ITEMS SCANNED").
+ *
+ * Deliberately sets ONLY case and letter-spacing — the two properties that had
+ * drifted across four different tracking values while the phases were built.
+ * Size, weight and colour stay with the caller so this composes with Tailwind's
+ * own utilities instead of racing them for specificity.
+ */
+@utility eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* Respects the notch and the home-bar area on modern phones. */
+@utility pb-safe {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@utility pt-safe {
+  padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
+}
+
+/* Frosted panel used for every card in the app. */
+@utility panel {
+  background-color: oklch(1 0 0 / 0.045);
+  border: 1px solid oklch(1 0 0 / 0.09);
+  backdrop-filter: blur(12px);
+  border-radius: 1.5rem;
+}
+
+/* Loading skeleton fill. */
+@utility skeleton {
+  background-image: linear-gradient(
+    100deg,
+    oklch(1 0 0 / 0.04) 30%,
+    oklch(1 0 0 / 0.11) 50%,
+    oklch(1 0 0 / 0.04) 70%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+  border-radius: 0.5rem;
+}
+
+/* ---- interaction polish ------------------------------------------------- */
+
+/* Removes the ~300ms tap delay on mobile and stops long-press selecting label
+   text, which makes repeated taps on Pause & Snap feel like a native app. */
+button,
+[role='tab'],
+a {
+  touch-action: manipulation;
+}
+
+button,
+[role='tab'] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* A visible focus ring for keyboard users, without the permanent outline that
+   would appear on every tap. */
+:focus-visible {
+  outline: 2px solid oklch(0.85 0.02 265);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* Dark-theme scrollbars — the default light ones cut through the dashboard
+   panels on the projector. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(1 0 0 / 0.18) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: oklch(1 0 0 / 0.16);
+  border-radius: 99px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(1 0 0 / 0.26);
+}
+
+/* Respect users who ask for less motion — animations become instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

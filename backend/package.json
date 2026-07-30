@@ -1,0 +1,25 @@
+{
+  "name": "waste-segregation-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Express + SQLite + Socket.IO backend for the Smart Waste Segregation Assistant",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@google/genai": "^2.14.0",
+    "better-sqlite3": "^12.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "@google/genai@2.14.0": true,
+    "protobufjs@7.6.5": true
+  }
+}
