@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { readableTextOn, tint } from '../lib/color.js';
+import { binColorName, readableTextOn, tint } from '../lib/color.js';
 
 /**
  * The result, presented as a sheet over the camera.
@@ -66,6 +66,19 @@ export default function ResultSheet({ result, photo, onDismiss, onScanAgain }) {
                 style={{ backgroundColor: color, color: readableTextOn(color) }}
               >
                 {result.categoryName}
+              </span>
+              {/* The physical bin colour to walk to — a filled swatch plus its
+                  name, so "Recyclable" is instantly "the Blue bin". */}
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold text-white/85"
+                style={{ borderColor: tint(color, 0.45), backgroundColor: tint(color, 0.12) }}
+              >
+                <span
+                  className="h-2.5 w-2.5 rounded-full ring-1 ring-white/25"
+                  style={{ backgroundColor: color }}
+                  aria-hidden="true"
+                />
+                {binColorName(color)} bin
               </span>
               {result.material && (
                 <span className="rounded-full bg-white/8 px-2.5 py-1 text-xs font-medium text-white/65">

@@ -43,6 +43,45 @@ export function solid(hex) {
 }
 
 /**
+ * Names the physical bin colour for a category swatch — "Green", "Blue",
+ * "Yellow", "Grey"… — so a scan result can tell someone which coloured bin to
+ * walk to, not just the abstract category.
+ *
+ * Category colours are admin-editable arbitrary hex, so this snaps the colour to
+ * the nearest of a small set of named reference colours (simple RGB distance).
+ * It is exact for the seeded palette and gives a sensible closest name for any
+ * custom colour an admin might pick.
+ */
+const BIN_REFERENCES = [
+  { name: 'Green', r: 0x22, g: 0xc5, b: 0x5e },
+  { name: 'Blue', r: 0x3b, g: 0x82, b: 0xf6 },
+  { name: 'Red', r: 0xef, g: 0x44, b: 0x44 },
+  { name: 'Yellow', r: 0xea, g: 0xb3, b: 0x08 },
+  { name: 'Orange', r: 0xf9, g: 0x73, b: 0x16 },
+  { name: 'Brown', r: 0x92, g: 0x40, b: 0x0e },
+  { name: 'Purple', r: 0xa8, g: 0x55, b: 0xf7 },
+  { name: 'Pink', r: 0xec, g: 0x48, b: 0x99 },
+  { name: 'Grey', r: 0x64, g: 0x74, b: 0x8b },
+  { name: 'Grey', r: 0x80, g: 0x80, b: 0x80 },
+  { name: 'White', r: 0xf5, g: 0xf5, b: 0xf5 },
+  { name: 'Black', r: 0x14, g: 0x14, b: 0x14 }
+];
+
+export function binColorName(hex) {
+  const { r, g, b } = parseHex(hex);
+  let best = BIN_REFERENCES[0];
+  let bestDist = Infinity;
+  for (const ref of BIN_REFERENCES) {
+    const dist = (r - ref.r) ** 2 + (g - ref.g) ** 2 + (b - ref.b) ** 2;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = ref;
+    }
+  }
+  return best.name;
+}
+
+/**
  * Picks black or white text for a filled swatch of this colour, using the
  * WCAG relative-luminance formula — so a pale category colour chosen in admin
  * still yields readable text instead of white-on-yellow.
