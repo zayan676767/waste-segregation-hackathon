@@ -74,8 +74,8 @@ classifyRouter.post('/', async (req, res, next) => {
     const insert = db.prepare(
       `INSERT INTO scans
          (category_id, label, item_description, material, disposal_instructions,
-          environmental_note, engine, confidence, source)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          why_category, why_not_others, environmental_note, engine, confidence, source)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     const inserted = insert.run(
       result.categoryId,
@@ -83,6 +83,8 @@ classifyRouter.post('/', async (req, res, next) => {
       result.itemDescription,
       result.material,
       result.disposalInstructions,
+      result.whyThisCategory,
+      result.whyNotOtherBins,
       result.environmentalNote,
       result.engine,
       result.confidence,

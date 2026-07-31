@@ -6,6 +6,7 @@ import { setting, useAppData } from '../lib/useAppData.js';
 import { tint } from '../lib/color.js';
 import CategoryBarChart from '../components/dashboard/CategoryBarChart.jsx';
 import ScanFeed from '../components/dashboard/ScanFeed.jsx';
+import QrJoinPanel from '../components/dashboard/QrJoinPanel.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 
 // Enough history to look busy on screen without growing unbounded over a long
@@ -122,6 +123,10 @@ export default function DashboardPage({ device }) {
       <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[1.1fr_1fr] lg:gap-6">
         {/* ---- left: headline numbers + breakdown ---- */}
         <div className="flex min-h-0 flex-col gap-5">
+          {/* A phone that opened the dashboard already has the app; the QR is
+              for the projected screen, so it is shown only on the laptop. */}
+          {!device?.isPhone && <QrJoinPanel />}
+
           <section className="panel p-5 lg:p-7">
             <p className="text-xs font-semibold eyebrow text-white/40 lg:text-sm">
               Total items scanned

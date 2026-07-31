@@ -69,6 +69,8 @@ db.exec(`
     item_description     TEXT    NOT NULL DEFAULT '',
     material             TEXT    NOT NULL DEFAULT '',
     disposal_instructions TEXT   NOT NULL DEFAULT '',
+    why_category         TEXT    NOT NULL DEFAULT '',
+    why_not_others       TEXT    NOT NULL DEFAULT '',
     environmental_note   TEXT    NOT NULL DEFAULT '',
     engine               TEXT    NOT NULL DEFAULT 'gemini',
     confidence           REAL    NOT NULL,
@@ -94,6 +96,8 @@ function ensureScanColumns() {
     ['item_description', "TEXT NOT NULL DEFAULT ''"],
     ['material', "TEXT NOT NULL DEFAULT ''"],
     ['disposal_instructions', "TEXT NOT NULL DEFAULT ''"],
+    ['why_category', "TEXT NOT NULL DEFAULT ''"],
+    ['why_not_others', "TEXT NOT NULL DEFAULT ''"],
     ['environmental_note', "TEXT NOT NULL DEFAULT ''"],
     ['engine', "TEXT NOT NULL DEFAULT 'gemini'"]
   ];

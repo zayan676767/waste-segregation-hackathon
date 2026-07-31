@@ -31,6 +31,8 @@ export function toScan(row) {
     itemDescription: row.item_description ?? '',
     material: row.material ?? '',
     disposalInstructions: row.disposal_instructions ?? '',
+    whyThisCategory: row.why_category ?? '',
+    whyNotOtherBins: row.why_not_others ?? '',
     environmentalNote: row.environmental_note ?? '',
     engine: row.engine ?? 'gemini',
     confidence: row.confidence,

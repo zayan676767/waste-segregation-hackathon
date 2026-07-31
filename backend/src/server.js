@@ -5,6 +5,7 @@ import { envLoaded } from './env.js';
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'node:http';
+import { networkInterfaces } from 'node:os';
 import { Server as SocketServer } from 'socket.io';
 
 import { db, DB_PATH } from './db.js';
@@ -50,6 +51,30 @@ app.get('/api/health', (req, res) => {
     serverTime: now,
     uptimeSeconds: Math.round(process.uptime())
   });
+});
+
+/**
+ * The laptop's LAN addresses, so the dashboard can render a QR code that a
+ * judge's own phone can scan to open the camera. The dashboard supplies the
+ * scheme and port (from its own window.location) and only needs the host from
+ * here — the same machine serves both, so its IP is what the phone must reach.
+ *
+ * Ranked exactly like scripts/show-urls.mjs: a phone hotspot hands out
+ * 192.168.x.x, so those come first and `primary` is the best guess.
+ */
+app.get('/api/network', (req, res) => {
+  const addresses = Object.entries(networkInterfaces())
+    .flatMap(([name, list]) =>
+      (list ?? [])
+        .filter((net) => net.family === 'IPv4' && !net.internal)
+        .map((net) => ({ name, address: net.address }))
+    )
+    .sort((a, b) => {
+      const score = (ip) => (ip.startsWith('192.168.') ? 0 : ip.startsWith('172.') ? 1 : 2);
+      return score(a.address) - score(b.address);
+    });
+
+  res.json({ addresses, primary: addresses[0]?.address ?? null });
 });
 
 app.use('/api/classify', classifyRouter);

@@ -117,6 +117,16 @@ function buildResponseSchema(categoryNames) {
         enum: [...categoryNames, 'Unknown'],
         description: 'Which waste stream this belongs in. Must be one of the listed values.'
       },
+      whyThisCategory: {
+        type: 'string',
+        description:
+          'One or two sentences justifying why this item belongs in the chosen category — reason from the material and how it is processed, not just the name. E.g. "PET plastic is accepted by kerbside recycling and melts down cleanly into new bottles."'
+      },
+      whyNotOtherBins: {
+        type: 'string',
+        description:
+          'One or two sentences explaining why the item does NOT belong in the OTHER listed bins. Name at least one other category explicitly and give the concrete reason it would be wrong. E.g. "It is not biodegradable, so composting would leave permanent plastic; and it carries no toxic components, so it does not need hazardous handling."'
+      },
       confidence: {
         type: 'number',
         description: 'How certain you are of the identification, from 0 to 1.'
@@ -140,6 +150,8 @@ function buildResponseSchema(categoryNames) {
       'itemName',
       'itemDescription',
       'category',
+      'whyThisCategory',
+      'whyNotOtherBins',
       'confidence',
       'disposalInstructions',
       'environmentalNote',
@@ -163,6 +175,8 @@ Rules:
 - Name the TYPE of object, not the category and not the brand. "AAA Alkaline Battery", not "hazardous waste" and not "Duracell Battery". Use Title Case.
 - Never use a brand, manufacturer or model name anywhere in your answer, even if it is printed on the object or clearly visible. Describe what the object generically IS, not whose product it is.
 - Write disposalInstructions for this TYPE of object specifically. If it is a battery, say where batteries go; do not repeat generic category advice. Write it as plain sentences — do not add your own numbering or bullets.
+- Justify the classification. In whyThisCategory, explain why this item belongs in the chosen bin, reasoning from its material and how that material is processed. In whyNotOtherBins, name at least one of the OTHER listed categories and give the concrete reason the item does not belong there. Judges will read these, so make them specific to this exact item, never generic.
+- In environmentalNote, give one specific, interesting environmental fact about disposing of this item correctly or incorrectly. Include a number where you can.
 - If the image shows no clear object — only a hand, a bare surface, or a blurred scene — set isWasteItem to false and set category to "Unknown".
 - If the object genuinely does not fit any listed category, use "Unknown".
 - Be honest in confidence. Use a low value when the image is unclear.
@@ -340,6 +354,8 @@ function normalise(raw, categories) {
     itemDescription: text(raw.itemDescription, 400),
     material: text(raw.material, 80),
     disposalInstructions: stripSelfNumbering(text(raw.disposalInstructions, 600)),
+    whyThisCategory: text(raw.whyThisCategory, 400),
+    whyNotOtherBins: text(raw.whyNotOtherBins, 400),
     environmentalNote: text(raw.environmentalNote, 400),
     confidence: Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0,
     categoryId: match?.id ?? null,

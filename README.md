@@ -10,6 +10,13 @@ screen.
 
 - **Gemini vision on every scan.** One deliberate tap is one request, so it
   stays well under the free tier's rate limit and every result is worth reading.
+- **Every classification justifies itself.** Alongside the bin, each result
+  explains *why* the item belongs in that category, *why it does not* go in the
+  other bins, and gives *one environmental fact* — so a result is an argument
+  you can check, not a black-box label.
+- **Scan-to-join QR code** on the dashboard. A judge points their own phone at
+  the projected screen and lands straight on the scanner — no typing the
+  self-signed https LAN address by hand.
 - **Nothing is hardcoded.** Category names, colours, disposal tips, impact text
   and the confidence threshold all live in SQLite and are editable from the
   admin panel — and the live category list is sent to Gemini on every scan, so

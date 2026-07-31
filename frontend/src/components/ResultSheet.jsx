@@ -126,13 +126,62 @@ export default function ResultSheet({ result, photo, onDismiss, onScanAgain }) {
           </section>
         )}
 
+        {/* Questioning the classification — the "why", not just the "what".
+            Answers three things a judge might challenge: why this bin, why not
+            the others, and one environmental fact. */}
+        {(result.whyThisCategory || result.whyNotOtherBins) && (
+          <section
+            className="space-y-3 rounded-2xl border p-4"
+            style={{ borderColor: tint(color, 0.22), backgroundColor: 'rgba(255,255,255,0.03)' }}
+          >
+            <h3 className="eyebrow text-[10px] font-bold text-white/50">Why this classification</h3>
+
+            {result.whyThisCategory && (
+              <div className="flex gap-2.5">
+                <span
+                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                  style={{ backgroundColor: tint(color, 0.9), color: readableTextOn(color) }}
+                  aria-hidden="true"
+                >
+                  ✓
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-white/50">
+                    Why it belongs in {result.categoryName}
+                  </p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-white/80">
+                    {result.whyThisCategory}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {result.whyNotOtherBins && (
+              <div className="flex gap-2.5">
+                <span
+                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-bold text-white/70"
+                  aria-hidden="true"
+                >
+                  ✕
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-white/50">Why not the other bins</p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-white/80">
+                    {result.whyNotOtherBins}
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
         {result.environmentalNote && (
           <section className="flex gap-3 rounded-2xl bg-white/5 p-4">
             <span className="text-lg" aria-hidden="true" style={{ animation: 'var(--animate-drift)' }}>
               🌍
             </span>
             <div className="min-w-0">
-              <h3 className="eyebrow text-[10px] font-bold text-white/45">Did you know</h3>
+              <h3 className="eyebrow text-[10px] font-bold text-white/45">Environmental fact</h3>
               <p className="mt-1 text-sm leading-relaxed text-white/75">
                 {result.environmentalNote}
               </p>

@@ -65,6 +65,7 @@ export const api = {
 
   getStats: () => request('GET', '/api/stats'),
   getHealth: () => request('GET', '/api/health'),
+  getNetwork: () => request('GET', '/api/network'),
 
   // Vision. classify() sends one image and returns the identified item plus the
   // scan row the backend wrote for it.

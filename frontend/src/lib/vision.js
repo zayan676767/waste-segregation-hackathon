@@ -110,6 +110,8 @@ async function classifyOffline({ base64, source }) {
       itemDescription: '',
       material: '',
       disposalInstructions: '',
+      whyThisCategory: '',
+      whyNotOtherBins: '',
       environmentalNote: '',
       confidence: resolved.confidence ?? 0,
       categoryId: null,
@@ -142,8 +144,12 @@ async function classifyOffline({ base64, source }) {
     itemDescription: '',
     material: '',
     // The offline model cannot describe a specific item, so fall back to the
-    // category's own guidance rather than inventing detail.
+    // category's own guidance rather than inventing detail. It also cannot
+    // reason about why other bins are wrong, so those stay empty and the UI
+    // simply omits them.
     disposalInstructions: category?.disposalTip ?? '',
+    whyThisCategory: '',
+    whyNotOtherBins: '',
     environmentalNote: category?.impactText ?? '',
     confidence: resolved.confidence,
     categoryId: category?.id ?? null,
