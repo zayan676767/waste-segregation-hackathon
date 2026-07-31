@@ -122,7 +122,7 @@ export default function DashboardPage({ device }) {
 
       <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[1.1fr_1fr] lg:gap-6">
         {/* ---- left: headline numbers + breakdown ---- */}
-        <div className="flex min-h-0 flex-col gap-5">
+        <div className="flex min-h-0 flex-col gap-4">
           {/* A phone that opened the dashboard already has the app; the QR is
               for the projected screen, so it is shown only on the laptop. */}
           {!device?.isPhone && <QrJoinPanel />}
@@ -169,7 +169,7 @@ export default function DashboardPage({ device }) {
             {/* min-h-0 + overflow-hidden: the bars shrink to whatever height the
                 panel has and can never spill past its rounded border, however
                 short the window gets. */}
-            <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
               {loading ? (
                 <div className="flex h-full flex-col justify-center gap-4">
                   {[0.9, 0.65, 0.4].map((w, i) => (

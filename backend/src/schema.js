@@ -39,6 +39,24 @@ const DEFAULT_CATEGORIES = [
     impact_text:
       'A single AA battery can contaminate up to 20 litres of water and 1 m² of soil. Correct e-waste disposal also recovers scarce metals like gold and cobalt.',
     sort_order: 3
+  },
+  {
+    name: 'Biomedical',
+    color: '#eab308',
+    disposal_tip:
+      'Never put this in a household bin. Used syringes, bandages, dressings and other clinical waste go into the yellow biomedical-waste bin and must be handed to an authorised medical-waste handler for high-temperature incineration. Never recap needles by hand.',
+    impact_text:
+      'Mismanaged biomedical waste spreads infections like Hepatitis B and HIV through a single needle-stick injury. India alone generates over 700 tonnes of it a day, and incineration is the only safe route for infectious material.',
+    sort_order: 4
+  },
+  {
+    name: 'General Waste',
+    color: '#64748b',
+    disposal_tip:
+      'This is residual waste that can be neither composted nor recycled. Bag sanitary pads, diapers and sweeping dust and place them in the black or grey general-waste bin. Wrap soiled or sharp items so they cannot injure collection workers.',
+    impact_text:
+      'A single disposable diaper can take up to 500 years to break down in landfill. Keeping residual waste out of the wet and dry streams is what stops a whole batch of compost or recyclables from being contaminated and rejected.',
+    sort_order: 5
   }
 ];
 
@@ -156,6 +174,18 @@ const DEFAULT_LABEL_MAP = {
     // where a battery belongs. Remove them if erasers or cosmetics ever need to
     // classify correctly — this is a deliberate trade-off, not a taxonomy claim.
     'rubber eraser', 'lipstick'
+  ],
+  Biomedical: [
+    'syringe', 'hypodermic needle', 'needle', 'band aid', 'bandage', 'plaster',
+    'gauze', 'dressing', 'cotton swab', 'swab', 'face mask', 'surgical mask',
+    'respirator', 'latex glove', 'medical glove', 'glove', 'vial', 'ampoule',
+    'test tube', 'blood bag', 'iv bag', 'scalpel', 'lancet'
+  ],
+  'General Waste': [
+    'diaper', 'nappy', 'sanitary napkin', 'sanitary pad', 'sanitary towel',
+    'panty liner', 'tampon', 'cotton ball', 'cotton wool', 'wet wipe',
+    'baby wipe', 'cigarette butt', 'cigarette', 'chewing gum', 'sweepings',
+    'dust', 'ash', 'broken ceramic', 'broken crockery', 'porcelain shard'
   ]
 };
 
