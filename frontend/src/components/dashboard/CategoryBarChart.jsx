@@ -1,95 +1,80 @@
-import {
-  Bar,
-  BarChart,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from 'recharts';
+import { tint } from '../../lib/color.js';
 
 /**
  * Category breakdown, built for a projector at the back of a room.
  *
- * Horizontal bars because the categories are words — read left to right at any
- * distance — and because magnitude comparison is the job here.
+ * Plain CSS bars rather than a chart engine, on purpose. The data is only ever
+ * a handful of categories, and a charting library's vertical-layout Y axis
+ * right-aligns the names (a ragged left edge) and drops any zero-count bar
+ * entirely — which on a tall laptop panel left two categories as floating
+ * labels with no bar. A hand-built row gives a tidy left-aligned name column,
+ * a bar for every category including the empty ones, and pixel-identical
+ * results on a phone and a laptop.
  *
  * Identity never depends on colour. Category colours are database values the
- * user can change to anything in admin, so a validated palette cannot be
- * guaranteed at runtime; every bar therefore carries its name on the axis and
- * its count as a direct label. Colour is reinforcement, not the encoding.
- *
- * One series, so no legend box — the axis labels name each bar.
+ * user can change to anything in admin, so every row carries its name in text
+ * and its count as a number — colour is reinforcement, not the encoding.
  */
 export default function CategoryBarChart({ data, total }) {
   if (!data?.length) return null;
 
-  // A tiny floor so a zero-count category still shows a sliver of its colour
-  // rather than vanishing from the chart entirely.
+  // The longest bar sets the scale. Floored at 1 so a set of all-zero counts
+  // does not divide by zero and simply shows every bar at its minimum sliver.
   const max = Math.max(1, ...data.map((d) => d.count));
 
   return (
-    <div className="h-full w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={{ top: 4, right: 64, bottom: 4, left: 4 }}
-          barCategoryGap="28%"
-        >
-          {/* Axes stay recessive: no grid, no axis lines, no tick marks. */}
-          <XAxis type="number" domain={[0, max]} hide />
-          <YAxis
-            type="category"
-            dataKey="name"
-            width={150}
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: 'rgba(255,255,255,0.78)', fontSize: 17, fontWeight: 600 }}
-          />
-          <Tooltip
-            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-            content={<ChartTooltip total={total} />}
-          />
-          <Bar dataKey="count" radius={[0, 6, 6, 0]} isAnimationActive={false}>
-            {data.map((d) => (
-              <Cell key={d.categoryId} fill={d.color} />
-            ))}
-            <LabelList
-              dataKey="count"
-              position="right"
-              offset={12}
-              /* Text wears a text token, not the series colour. */
-              fill="rgba(255,255,255,0.95)"
-              fontSize={22}
-              fontWeight={800}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
+    <div className="flex h-full flex-col justify-center gap-3 lg:gap-4">
+      {data.map((d) => {
+        const pct = total > 0 ? Math.round((d.count / total) * 100) : 0;
+        // Every category keeps a visible sliver of its colour even at zero, so
+        // the breakdown reads as complete rather than half-empty.
+        const fill = Math.max(3, (d.count / max) * 100);
 
-function ChartTooltip({ active, payload, total }) {
-  if (!active || !payload?.length) return null;
-  const row = payload[0].payload;
-  const pct = total > 0 ? Math.round((row.count / total) * 100) : 0;
+        return (
+          <div key={d.categoryId ?? d.name} className="flex items-center gap-3 lg:gap-4">
+            {/* Fixed-width, left-aligned name column — the tidy left edge. */}
+            <span
+              className="w-28 shrink-0 truncate text-[15px] font-semibold text-white/80 lg:w-40 lg:text-lg"
+              title={d.name}
+            >
+              {d.name}
+            </span>
 
-  return (
-    <div className="rounded-xl border border-white/15 bg-slate-900/95 px-3 py-2 shadow-xl backdrop-blur">
-      <div className="flex items-center gap-2">
-        <span
-          className="h-2.5 w-2.5 rounded-sm"
-          style={{ backgroundColor: row.color }}
-          aria-hidden="true"
-        />
-        <span className="text-sm font-semibold text-white">{row.name}</span>
-      </div>
-      <p className="mt-0.5 text-xs text-white/60">
-        {row.count} {row.count === 1 ? 'item' : 'items'} · {pct}% of all scans
-      </p>
+            {/* Track + fill. The count rides at the right of the track. */}
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div
+                className="h-7 min-w-0 flex-1 overflow-hidden rounded-lg lg:h-9"
+                style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+                role="progressbar"
+                aria-valuenow={d.count}
+                aria-valuemin={0}
+                aria-valuemax={max}
+                aria-label={`${d.name}: ${d.count} ${d.count === 1 ? 'item' : 'items'}`}
+              >
+                <div
+                  className="h-full rounded-lg transition-[width] duration-700 ease-out"
+                  style={{
+                    width: `${fill}%`,
+                    backgroundColor: d.color,
+                    boxShadow: d.count > 0 ? `0 0 16px ${tint(d.color, 0.6)}` : 'none'
+                  }}
+                />
+              </div>
+
+              <div className="flex w-16 shrink-0 items-baseline justify-end gap-1.5">
+                <span className="text-xl font-black tabular-nums text-white lg:text-2xl">
+                  {d.count}
+                </span>
+                {total > 0 && (
+                  <span className="text-[11px] font-semibold tabular-nums text-white/35">
+                    {pct}%
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
