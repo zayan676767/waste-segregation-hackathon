@@ -67,7 +67,7 @@ export default function QrJoinPanel() {
       {/* White quiet-zone card so the code stays high-contrast on the dark
           dashboard and scans reliably from across the booth. */}
       <div
-        className="h-24 w-24 shrink-0 rounded-xl bg-white p-1.5 lg:h-28 lg:w-28 [&_svg]:h-full [&_svg]:w-full"
+        className="h-20 w-20 shrink-0 rounded-xl bg-white p-1.5 lg:h-24 lg:w-24 [&_svg]:h-full [&_svg]:w-full"
         // The SVG comes from the qrcode library, not user input, so injecting
         // it as markup is safe and keeps the code crisp at any projected size.
         dangerouslySetInnerHTML={{ __html: svg }}

@@ -23,7 +23,7 @@ export default function CategoryBarChart({ data, total }) {
   const max = Math.max(1, ...data.map((d) => d.count));
 
   return (
-    <div className="flex h-full flex-col justify-center gap-3 lg:gap-4">
+    <div className="flex h-full flex-col justify-center gap-2.5 lg:gap-3">
       {data.map((d) => {
         const pct = total > 0 ? Math.round((d.count / total) * 100) : 0;
         // Every category keeps a visible sliver of its colour even at zero, so
@@ -43,7 +43,7 @@ export default function CategoryBarChart({ data, total }) {
             {/* Track + fill. The count rides at the right of the track. */}
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <div
-                className="h-7 min-w-0 flex-1 overflow-hidden rounded-lg lg:h-9"
+                className="h-6 min-w-0 flex-1 overflow-hidden rounded-lg lg:h-8"
                 style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
                 role="progressbar"
                 aria-valuenow={d.count}

@@ -134,9 +134,9 @@ export default function DashboardPage({ device }) {
             {/* A skeleton rather than a placeholder zero: on a projected screen a
                 real-looking 0 that jumps to the true total reads as a glitch. */}
             {loading ? (
-              <div className="skeleton mt-2 h-14 w-40 lg:h-24 lg:w-56" />
+              <div className="skeleton mt-2 h-12 w-36 lg:h-20 lg:w-52" />
             ) : (
-              <p className="mt-1 text-6xl font-black leading-none tabular-nums text-white lg:text-8xl">
+              <p className="mt-1 text-5xl font-black leading-none tabular-nums text-white lg:text-7xl">
                 <CountUp value={total} />
               </p>
             )}
@@ -162,11 +162,14 @@ export default function DashboardPage({ device }) {
             </div>
           </section>
 
-          <section className="panel flex min-h-0 flex-1 flex-col p-5 lg:p-6">
+          <section className="panel flex min-h-0 flex-1 flex-col overflow-hidden p-5 lg:p-6">
             <h2 className="text-xs font-semibold eyebrow text-white/40 lg:text-sm">
               Category breakdown
             </h2>
-            <div className="mt-4 flex min-h-[190px] flex-1 flex-col">
+            {/* min-h-0 + overflow-hidden: the bars shrink to whatever height the
+                panel has and can never spill past its rounded border, however
+                short the window gets. */}
+            <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
               {loading ? (
                 <div className="flex h-full flex-col justify-center gap-4">
                   {[0.9, 0.65, 0.4].map((w, i) => (
