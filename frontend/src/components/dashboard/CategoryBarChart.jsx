@@ -23,7 +23,7 @@ export default function CategoryBarChart({ data, total }) {
   const max = Math.max(1, ...data.map((d) => d.count));
 
   return (
-    <div className="flex h-full flex-col justify-center gap-2 lg:gap-2.5">
+    <div className="flex min-h-full flex-col justify-center gap-2 lg:gap-2.5">
       {data.map((d) => {
         const pct = total > 0 ? Math.round((d.count / total) * 100) : 0;
         // Every category keeps a visible sliver of its colour even at zero, so

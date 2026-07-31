@@ -86,7 +86,7 @@ export default function DashboardPage({ device }) {
   );
 
   return (
-    <div className="flex min-h-screen flex-col gap-5 p-5 lg:h-screen lg:gap-6 lg:p-8">
+    <div className="flex min-h-screen flex-col gap-5 p-5 lg:gap-6 lg:p-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3.5">
           <BrandMark size="lg" />
@@ -169,7 +169,7 @@ export default function DashboardPage({ device }) {
             {/* min-h-0 + overflow-hidden: the bars shrink to whatever height the
                 panel has and can never spill past its rounded border, however
                 short the window gets. */}
-            <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto">
               {loading ? (
                 <div className="flex h-full flex-col justify-center gap-4">
                   {[0.9, 0.65, 0.4].map((w, i) => (
